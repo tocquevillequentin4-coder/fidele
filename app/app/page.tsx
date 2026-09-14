@@ -1,7 +1,8 @@
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
-import { logout } from "@/app/actions/auth";
+import { logout } from "@/app/actions/auth";import { addClient } from "@/app/actions/client";
+
 
 export default async function AppPage() {
   const session = await getSession();
@@ -10,7 +11,8 @@ export default async function AppPage() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.userId },
+    where: { id: session.userId },include: { commerce: { include: { clients: true } } },
+
   });
 
   return (
@@ -21,7 +23,22 @@ export default async function AppPage() {
       <h1 className="mt-3 font-serif text-3xl font-semibold text-marine">
         Bienvenue, {user?.email}
       </h1>
-      <p className="mt-2 text-marine/70">
+      <p className="mt-2 text-marine/70">        <form action={addClient} className="mt-8 w-full max-w-sm space-y-3 text-left">
+          <input name="nom" placeholder="Nom du client" required className="w-full rounded-lg border border-marine/20 px-4 py-2" />
+          <input name="telephone" placeholder="Téléphone" className="w-full rounded-lg border border-marine/20 px-4 py-2" />
+          <input name="email" placeholder="Email" className="w-full rounded-lg border border-marine/20 px-4 py-2" />
+          <button type="submit" className="w-full rounded-full bg-corail px-6 py-2 text-sm font-semibold text-creme">
+            Ajouter un client
+          </button>
+        </form>
+        <ul className="mt-8 w-full max-w-sm space-y-2 text-left text-sm text-marine/80">
+          {user?.commerce?.clients.map((client) => (
+            <li key={client.id} className="rounded-lg border border-marine/10 px-4 py-2">
+              {client.nom} -- {client.telephone || client.email}
+            </li>
+          ))}
+        </ul>
+
         Le tableau de bord arrive à l&apos;étape suivante.
       </p>
       <form action={logout} className="mt-8">
