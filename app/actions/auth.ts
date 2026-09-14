@@ -18,9 +18,11 @@ export async function signup(formData: FormData) {
   }
 
   const passwordHash = await hashPassword(password);
-  const user = await prisma.user.create({ data: { email, passwordHash } });
+    const user = await prisma.user.create({ data: { email, passwordHash } });await prisma.commerce.create({ data: { name: "Mon commerce", ownerId: user.id } });
+
   await createSession(user.id);
   redirect("/app");
+
 }
 
 export async function login(formData: FormData) {
