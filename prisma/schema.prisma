@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  createdAt    DateTime   @default(now())
+  commerce     Commerce?
+}
+
+model Commerce {
+  id                     String   @id @default(cuid())
+  name                   String
+  delaiRappelJours       Int      @default(30)
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
+  subscriptionStatus     String?
+  createdAt              DateTime @default(now())
+  owner                  User     @relation(fields: [ownerId], references: [id])
+  ownerId                String   @unique
+  clients                Client[]
+}
+
+model Client {
+  id             String     @id @default(cuid())
+  nom            String
+  telephone      String?
+  email          String?
+  dernierAchatAt DateTime
+  createdAt      DateTime   @default(now())
+  commerce       Commerce   @relation(fields: [commerceId], references: [id])
+  commerceId     String
+  reminders      Reminder[]
+}
+
+model Reminder {
+  id             String    @id @default(cuid())
+  envoyeAt       DateTime  @default(now())
+  offreCode      String    @unique
+  utilisee       Boolean   @default(false)
+  utiliseeAt     DateTime?
+  montantGenere  Float?
+  client         Client    @relation(fields: [clientId], references: [id])
+  clientId       String
+}
