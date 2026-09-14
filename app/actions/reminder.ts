@@ -39,4 +39,11 @@ export async function sendReminder(clientId: string) {
   });
 
   await resend.emails.send({
-    from
+    from: "Fidèle <onboarding@resend.dev>",
+    to: client.email,
+    subject: `${client.commerce.name} pense à vous !`,
+    html: `<p>Bonjour ${client.nom},</p><p>Ça fait un moment qu'on ne vous a pas vu chez ${client.commerce.name}. Revenez nous voir avec ce code pour une offre spéciale : <strong>${code}</strong></p>`,
+  });
+
+  revalidatePath("/app");
+}
