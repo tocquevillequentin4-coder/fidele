@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import { addClient } from "@/app/actions/client";
 import { createCheckoutSession } from "@/app/actions/stripe";
+import { sendReminder } from "@/app/actions/reminder";
 
 export default async function AppPage() {
   const session = await getSession();
@@ -35,8 +36,13 @@ export default async function AppPage() {
       </form>
       <ul className="mt-8 w-full max-w-sm space-y-2 text-left text-sm text-marine/80">
         {user?.commerce?.clients.map((client) => (
-          <li key={client.id} className="rounded-lg border border-marine/10 px-4 py-2">
-            {client.nom} -- {client.telephone || client.email}
+          <li key={client.id} className="flex items-center justify-between gap-3 rounded-lg border border-marine/10 px-4 py-2">
+            <span>{client.nom} -- {client.telephone || client.email}</span>
+            <form action={sendReminder.bind(null, client.id)}>
+              <button type="submit" className="whitespace-nowrap rounded-full border border-corail px-3 py-1 text-xs font-semibold text-corail">
+                Envoyer un rappel
+              </button>
+            </form>
           </li>
         ))}
       </ul>
