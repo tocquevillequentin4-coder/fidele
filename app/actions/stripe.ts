@@ -41,3 +41,25 @@ export async function createCheckoutSession() {
     redirect(checkoutSession.url);
   }
 }
+
+export async function openBillingPortal() {
+  const session = await getSession();
+  if (!session) {
+    redirect("/connexion");
+  }
+
+  const commerce = await prisma.commerce.findUnique({
+    where: { ownerId: session.userId },
+  });
+
+  if (!commerce?.stripeCustomerId) {
+    redirect("/app");
+  }
+
+  const portalSession = await stripe.billingPortal.sessions.create({
+    customer: commerce.stripeCustomerId,
+    return_url: "https://fidele-xi.vercel.app/app",
+  });
+
+  redirect(portalSession.url);
+}
