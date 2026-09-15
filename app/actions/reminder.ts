@@ -47,3 +47,38 @@ export async function sendReminder(clientId: string) {
 
   revalidatePath("/app");
 }
+
+export async function markReminderUsed(formData: FormData) {
+  const session = await getSession();
+  if (!session) {
+    redirect("/connexion");
+  }
+
+  const reminderId = String(formData.get("reminderId") || "");
+  const montant = parseFloat(String(formData.get("montant") || "0"));
+
+  const reminder = await prisma.reminder.findUnique({
+    where: { id: reminderId },
+    include: { client: { include: { commerce: true } } },
+  });
+
+  if (!reminder || reminder.client.commerce.ownerId !== session.userId) {
+    redirect("/app");
+  }
+
+  await prisma.reminder.update({
+    where: { id: reminderId },
+    data: {
+      utilisee: true,
+      utiliseeAt: new Date(),
+      montantGenere: isNaN(montant) ? 0 : montant,
+    },
+  });
+
+  await prisma.client.update({
+    where: { id: reminder.client.id },
+    data: { dernierAchatAt: new Date() },
+  });
+
+  revalidatePath("/app");
+}
