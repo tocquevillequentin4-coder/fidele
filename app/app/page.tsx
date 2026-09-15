@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { logout } from "@/app/actions/auth";
 import { addClient } from "@/app/actions/client";
 import { createCheckoutSession } from "@/app/actions/stripe";
-import { sendReminder } from "@/app/actions/reminder";
+import { sendReminder, markReminderUsed } from "@/app/actions/reminder";
 
 export default async function AppPage() {
   const session = await getSession();
@@ -22,11 +22,14 @@ export default async function AppPage() {
   const reminders = commerceId
     ? await prisma.reminder.findMany({
         where: { client: { commerceId } },
+        include: { client: true },
+        orderBy: { envoyeAt: "desc" },
       })
     : [];
 
   const clientsRevenus = reminders.filter((r) => r.utilisee).length;
   const chiffreGenere = reminders.reduce((sum, r) => sum + (r.montantGenere || 0), 0);
+  const remindersEnAttente = reminders.filter((r) => !r.utilisee);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
@@ -47,6 +50,33 @@ export default async function AppPage() {
           <p className="text-xs text-marine/70">Chiffre généré</p>
         </div>
       </div>
+
+      {remindersEnAttente.length > 0 && (
+        <div className="mt-8 w-full max-w-sm text-left">
+          <p className="text-sm font-semibold text-marine">Codes en attente</p>
+          <ul className="mt-3 space-y-2">
+            {remindersEnAttente.map((reminder) => (
+              <li key={reminder.id} className="rounded-lg border border-marine/10 px-4 py-3">
+                <p className="text-sm text-marine">{reminder.client.nom} -- <span className="font-mono">{reminder.offreCode}</span></p>
+                <form action={markReminderUsed} className="mt-2 flex gap-2">
+                  <input type="hidden" name="reminderId" value={reminder.id} />
+                  <input
+                    name="montant"
+                    type="number"
+                    step="0.01"
+                    placeholder="Montant €"
+                    className="w-24 rounded-lg border border-marine/20 px-2 py-1 text-sm"
+                  />
+                  <button type="submit" className="rounded-full bg-corail px-3 py-1 text-xs font-semibold text-creme">
+                    Marquer utilisé
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <form action={addClient} className="mt-8 w-full max-w-sm space-y-3 text-left">
         <input name="nom" placeholder="Nom du client" required className="w-full rounded-lg border border-marine/20 px-4 py-2" />
         <input name="telephone" placeholder="Téléphone" className="w-full rounded-lg border border-marine/20 px-4 py-2" />
