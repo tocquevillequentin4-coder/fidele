@@ -20,6 +20,7 @@ export async function createCheckoutSession() {
 
   const checkoutSession = await stripe.checkout.sessions.create({
     mode: "subscription",
+    subscription_data: { trial_period_days: 30 },
     line_items: [
       {
         price_data: {
