@@ -17,6 +17,17 @@ export default async function AppPage() {
     include: { commerce: { include: { clients: true } } },
   });
 
+  const commerceId = user?.commerce?.id;
+
+  const reminders = commerceId
+    ? await prisma.reminder.findMany({
+        where: { client: { commerceId } },
+      })
+    : [];
+
+  const clientsRevenus = reminders.filter((r) => r.utilisee).length;
+  const chiffreGenere = reminders.reduce((sum, r) => sum + (r.montantGenere || 0), 0);
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6 text-center">
       <p className="text-sm uppercase tracking-widest text-corail">Connecté</p>
@@ -26,6 +37,16 @@ export default async function AppPage() {
           S&apos;abonner -- 25€/mois
         </button>
       </form>
+      <div className="mt-8 grid w-full max-w-sm grid-cols-2 gap-3">
+        <div className="rounded-lg border border-marine/10 px-4 py-3">
+          <p className="text-2xl font-serif font-semibold text-marine">{clientsRevenus}</p>
+          <p className="text-xs text-marine/70">Clients revenus</p>
+        </div>
+        <div className="rounded-lg border border-marine/10 px-4 py-3">
+          <p className="text-2xl font-serif font-semibold text-marine">{chiffreGenere.toFixed(2)}€</p>
+          <p className="text-xs text-marine/70">Chiffre généré</p>
+        </div>
+      </div>
       <form action={addClient} className="mt-8 w-full max-w-sm space-y-3 text-left">
         <input name="nom" placeholder="Nom du client" required className="w-full rounded-lg border border-marine/20 px-4 py-2" />
         <input name="telephone" placeholder="Téléphone" className="w-full rounded-lg border border-marine/20 px-4 py-2" />
@@ -46,7 +67,6 @@ export default async function AppPage() {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-marine/70">Le tableau de bord arrive à l&apos;étape suivante.</p>
       <form action={logout} className="mt-8">
         <button
           type="submit"
